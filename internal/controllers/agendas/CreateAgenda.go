@@ -7,7 +7,16 @@ import (
 	"middleware/example/internal/models"
 	"middleware/example/internal/services/agendas"
 )
-
+// CreateAgenda godoc
+// @Summary Create a new agenda
+// @Description Add a new agenda to the database
+// @Tags agendas
+// @Accept json
+// @Produce json
+// @Param agenda body models.Agenda true "Agenda info"
+// @Success 201 {object} models.Agenda
+// @Failure 400 {object} map[string]string
+// @Router /agendas [post]
 // CreateAgendaHandler crée un nouvel agenda
 func CreateAgenda(w http.ResponseWriter, r *http.Request) {
 	var newAgenda models.Agenda

@@ -7,6 +7,15 @@ import (
 	"middleware/example/internal/services/agendas"
 )
 
+// DeleteAgenda godoc
+// @Summary Delete an agenda
+// @Description Delete an agenda by ID
+// @Tags agendas
+// @Param id path int true "Agenda ID"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /agendas/{id} [delete]
+
 // DeleteAgendaHandler supprime un agenda par son ID
 func DeleteAgenda(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

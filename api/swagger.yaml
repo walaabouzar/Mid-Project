@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  models.Agenda:
+    properties:
+      group_id:
+        type: string
+      ical_url:
+        type: string
+      id:
+        type: integer
+    type: object
   models.User:
     properties:
       id:
@@ -15,6 +24,58 @@ info:
   title: middleware/example
   version: 1.0.0
 paths:
+  /agendas:
+    delete:
+      description: Delete all agendas from the database
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete all agendas
+      tags:
+      - agendas
+    get:
+      description: Retrieve all agendas
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Agenda'
+            type: array
+      summary: Get all agendas
+      tags:
+      - agendas
+    post:
+      consumes:
+      - application/json
+      description: Add a new agenda to the database
+      parameters:
+      - description: Agenda info
+        in: body
+        name: agenda
+        required: true
+        schema:
+          $ref: '#/definitions/models.Agenda'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Agenda'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new agenda
+      tags:
+      - agendas
   /users:
     get:
       description: Get all users.

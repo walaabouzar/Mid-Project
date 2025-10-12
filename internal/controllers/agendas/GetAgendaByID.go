@@ -6,6 +6,14 @@ import (
 	"middleware/example/internal/helpers"
 	"middleware/example/internal/repositories/agendas"
 )
+// GetAgenda godoc
+// @Summary Get an agenda by ID
+// @Description Retrieve a single agenda by ID
+// @Tags agendas
+// @Param id path int true "Agenda ID"
+// @Success 200 {object} models.Agenda
+// @Failure 404 {object} map[string]string
+// @Router /agendas/{id} [get]
 
 func GetAgendaByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

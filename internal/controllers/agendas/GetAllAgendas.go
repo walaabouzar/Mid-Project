@@ -7,6 +7,12 @@ import (
 	"middleware/example/internal/repositories/agendas"
 )
 
+// GetAllAgendas godoc
+// @Summary Get all agendas
+// @Description Retrieve all agendas
+// @Tags agendas
+// @Success 200 {array} models.Agenda
+// @Router /agendas [get]
 // GetAllAgendas récupère tous les agendas
 func GetAllAgendas(w http.ResponseWriter, r *http.Request) {
 	allAgendas, err := agendas.GetAllAgendas()

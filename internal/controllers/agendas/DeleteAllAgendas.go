@@ -7,6 +7,12 @@ import (
 	"middleware/example/internal/services/agendas"
 )
 
+// DeleteAllAgendas godoc
+// @Summary Delete all agendas
+// @Description Delete all agendas from the database
+// @Tags agendas
+// @Success 200 {object} map[string]string
+// @Router /agendas [delete]
 // DeleteAllAgendasHandler supprime tous les agendas de la base
 func DeleteAllAgendas(w http.ResponseWriter, r *http.Request) {
 	err := agendas.DeleteAllAgendas()
