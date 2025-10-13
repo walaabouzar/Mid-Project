@@ -6,22 +6,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-
 func OpenDB() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", "file:timetable.db")
+	db, err := sql.Open("sqlite3", "file:users.db")
 	if err != nil {
-		return nil, err
+		db.SetMaxOpenConns(1)
 	}
-	db.SetMaxOpenConns(1)
-	
-	// Vérifier que la connexion fonctionne
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
-	
-	logrus.Info("✅ Connexion à la base de données réussie")
-	return db, nil
-	
+	return db, err
 }
 func CloseDB(db *sql.DB) {
 	err := db.Close()
