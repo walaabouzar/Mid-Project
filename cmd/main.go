@@ -41,6 +41,10 @@ func main() {
 		})
 	})
 	
+	
+	// Route pour afficher tous les événements de la base
+r.Get("/events/db", event.GetEventsFromDB)
+
 	// Route pour récupérer et parser tous les événements
 	r.Get("/events", event.FetchAndParseEvents)
 	
