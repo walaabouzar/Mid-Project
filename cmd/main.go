@@ -2,24 +2,25 @@ package main
 
 import (
 	"net/http"
-	"time"
+	//"time"
+	  
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 	"middleware/example/internal/controllers/users"
 	"middleware/example/internal/helpers"
 	"middleware/example/internal/controllers/event"
-	"middleware/example/internal/models"
+	//"middleware/example/internal/models"
 )
 
 func main() {
 	db, _ := helpers.OpenDB()
 	defer helpers.CloseDB(db)
 
-	testEvent := models.Event{
-		UID:         "TEST123",
-		Title:       "Cours de Go",
+/*	testEvent := models.Event{
+		UID:         "ADE60323032352d323032362d5543412d35383437302d302d30",
+		Title:       "Examen Calculabilité (1/3 temps)",
 		Location:    "Salle 101",
-		Description: "Introduction à GoLang",
+		Description: "MASTER 1 INFO RAYNAUD OLIVIER",
 		Start:       time.Now(),
 		End:         time.Now().Add(2 * time.Hour),
 		AgendaID:    13295,
@@ -30,7 +31,9 @@ func main() {
 	}
 
 	logrus.Info("✅ Test d’insertion réussi !")
-
+	
+*/
+	
 	r := chi.NewRouter()
 	
 	r.Route("/users", func(r chi.Router) { // route /users
@@ -54,6 +57,8 @@ r.Get("/events/db", event.GetEventsFromDB)
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		logrus.Fatalf("Error starting server: %s", err.Error())
 	}
+
+
 }
 
 func init() {
