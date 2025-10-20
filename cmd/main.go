@@ -3,37 +3,39 @@ package main
 import (
 	"net/http"
 	//"time"
-	  
+	  //"log"
+	  //"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 	"middleware/example/internal/controllers/users"
 	"middleware/example/internal/helpers"
 	"middleware/example/internal/controllers/event"
 	//"middleware/example/internal/models"
+
 )
 
 func main() {
 	db, _ := helpers.OpenDB()
 	defer helpers.CloseDB(db)
 
-/*	testEvent := models.Event{
+/*testEvent := models.Event{
 		UID:         "ADE60323032352d323032362d5543412d35383437302d302d30",
 		Title:       "Examen Calculabilité (1/3 temps)",
 		Location:    "Salle 101",
 		Description: "MASTER 1 INFO RAYNAUD OLIVIER",
-		Start:       time.Now(),
-		End:         time.Now().Add(2 * time.Hour),
+		Start: time.Now(),
+		End:   time.Now().Add(2 * time.Hour),		
+  
 		AgendaID:    13295,
 	}
-
+*/
 	if err := event.InsertEvent(testEvent); err != nil {
 		logrus.Fatalf("Erreur insertion : %s", err.Error())
 	}
 
 	logrus.Info("✅ Test d’insertion réussi !")
-	
-*/
-	
+
+
 	r := chi.NewRouter()
 	
 	r.Route("/users", func(r chi.Router) { // route /users
