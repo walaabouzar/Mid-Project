@@ -1,27 +1,49 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 )
 
 // Agenda minimal pour le scheduler
 type Agenda struct {
-	ID      int
-	GroupID string
-	ICalURL string
+	ID      int    `json:"id"`
+	GroupID string `json:"group_id"`
+	ICalURL string `json:"ical_url"`
 }
 
-// fetchAgendas simule la récupération des agendas depuis l'API Config
-func fetchAgendas() []Agenda {
-	// On simule un agenda comme celui de ton API Config
-	return []Agenda{
-		{ID: 31, GroupID: "G1", ICalURL: "https://example.com/calendar1.ics"},
-		{ID: 32, GroupID: "G2", ICalURL: "https://example.com/calendar2.ics"},
+// fetchAgendas récupère tous les agendas depuis l'API Config
+func fetchAgendas(apiURL string) ([]Agenda, error) {
+	resp, err := http.Get(apiURL + "/agendas")
+	if err != nil {
+		return nil, err
 	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var agendas []Agenda
+	if err := json.Unmarshal(body, &agendas); err != nil {
+		return nil, err
+	}
+
+	return agendas, nil
 }
 
 func main() {
-	agendas := fetchAgendas()
+	// Adresse de ton API Config
+	apiConfigURL := "http://localhost:8080"
+
+	agendas, err := fetchAgendas(apiConfigURL)
+	if err != nil {
+		log.Fatal("Erreur fetch agendas:", err)
+	}
 
 	fmt.Println("Agendas récupérés :")
 	for _, a := range agendas {

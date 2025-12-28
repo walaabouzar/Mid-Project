@@ -1,52 +1,52 @@
-package scheduler
+package main
 
 import (
-	"context"
-	"sync"
-	"time"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 )
 
-type Job func(ctx context.Context)
-
-type Scheduler struct {
-	wg            *sync.WaitGroup
-	cancellations []context.CancelFunc
+// Agenda minimal pour le scheduler
+type Agenda struct {
+	ID      int    `json:"id"`
+	GroupID string `json:"group_id"`
+	ICalURL string `json:"ical_url"`
 }
 
-func NewScheduler() *Scheduler {
-	return &Scheduler{
-		wg:            new(sync.WaitGroup),
-		cancellations: make([]context.CancelFunc, 0),
+// fetchAgendas récupère tous les agendas depuis l'API Config
+func fetchAgendas(apiURL string) ([]Agenda, error) {
+	resp, err := http.Get(apiURL + "/agendas")
+	if err != nil {
+		return nil, err
 	}
-}
+	defer resp.Body.Close()
 
-// Add starts goroutine which constantly calls provided job with interval delay
-func (s *Scheduler) Add(ctx context.Context, j Job, interval time.Duration) {
-	ctx, cancel := context.WithCancel(ctx)
-	s.cancellations = append(s.cancellations, cancel)
-
-	s.wg.Add(1)
-	go s.process(ctx, j, interval)
-}
-
-// Stop cancels all running jobs
-func (s *Scheduler) Stop() {
-	for _, cancel := range s.cancellations {
-		cancel()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
-	s.wg.Wait()
+
+	var agendas []Agenda
+	if err := json.Unmarshal(body, &agendas); err != nil {
+		return nil, err
+	}
+
+	return agendas, nil
 }
 
-func (s *Scheduler) process(ctx context.Context, j Job, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	for {
-		select {
-		case <-ticker.C:
-			j(ctx)
-		case <-ctx.Done():
-			s.wg.Done()
-			ticker.Stop()
-			return
-		}
+func main() {
+	// URL de ton API Config
+	apiConfigURL := "http://localhost:8080"
+
+	agendas, err := fetchAgendas(apiConfigURL)
+	if err != nil {
+		log.Fatal("Erreur fetch agendas:", err)
+	}
+
+	fmt.Println("Agendas récupérés :")
+	for _, a := range agendas {
+		fmt.Printf("ID=%d, Group=%s, URL=%s\n", a.ID, a.GroupID, a.ICalURL)
 	}
 }
