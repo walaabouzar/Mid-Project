@@ -1,8 +1,7 @@
-package main
+package scheduler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -15,8 +14,8 @@ type Agenda struct {
 	ICalURL string `json:"ical_url"`
 }
 
-// fetchAgendas récupère tous les agendas depuis l'API Config
-func fetchAgendas(apiURL string) ([]Agenda, error) {
+// FetchAgendas récupère tous les agendas depuis l'API Config
+func FetchAgendas(apiURL string) ([]Agenda, error) {
 	resp, err := http.Get(apiURL + "/agendas")
 	if err != nil {
 		return nil, err
@@ -36,17 +35,10 @@ func fetchAgendas(apiURL string) ([]Agenda, error) {
 	return agendas, nil
 }
 
-func main() {
-	// URL de ton API Config
-	apiConfigURL := "http://localhost:8080"
-
-	agendas, err := fetchAgendas(apiConfigURL)
-	if err != nil {
-		log.Fatal("Erreur fetch agendas:", err)
-	}
-
-	fmt.Println("Agendas récupérés :")
+// AfficheAgendas est une fonction utilitaire pour logging
+func AfficheAgendas(agendas []Agenda) {
+	log.Println("Agendas récupérés :")
 	for _, a := range agendas {
-		fmt.Printf("ID=%d, Group=%s, URL=%s\n", a.ID, a.GroupID, a.ICalURL)
+		log.Printf("ID=%d, Group=%s, URL=%s\n", a.ID, a.GroupID, a.ICalURL)
 	}
 }
