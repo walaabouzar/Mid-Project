@@ -6,10 +6,56 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings" // Ajouté pour le nettoyage des sujets
 	"time"
 
 	ical "github.com/arran4/golang-ical"
+	"github.com/nats-io/nats.go"
 )
+
+// Variable globale pour JetStream
+var js nats.JetStreamContext
+
+// --- NATS Functions ---
+
+func InitNats() {
+	nc, err := nats.Connect(nats.DefaultURL)
+	if err != nil {
+		log.Fatal("Erreur connexion NATS:", err)
+	}
+
+	js, err = nc.JetStream()
+	if err != nil {
+		log.Fatal("Erreur JetStream:", err)
+	}
+
+	_, err = js.AddStream(&nats.StreamConfig{
+		Name:     "COURS",
+		Subjects: []string{"COURS.>"},
+	})
+	if err != nil {
+		log.Println("Note: Le stream existe déjà ou erreur lors de la création.")
+	}
+}
+
+func PublishEvent(groupID string, event Event) {
+	data, err := json.Marshal(event)
+	if err != nil {
+		log.Println("Erreur marshal event:", err)
+		return
+	}
+
+	// NETTOYAGE : NATS n'accepte pas les espaces dans les sujets.
+	// On remplace les espaces par des points pour créer une hiérarchie valide.
+	// Exemple: "M1 G1 Langue" -> "M1.G1.Langue"
+	cleanGroupID := strings.ReplaceAll(groupID, " ", ".")
+
+	subject := "COURS." + cleanGroupID
+	_, err = js.Publish(subject, data)
+	if err != nil {
+		log.Printf("Erreur publication NATS sur %s: %v\n", subject, err)
+	}
+}
 
 // --- Agendas ---
 
