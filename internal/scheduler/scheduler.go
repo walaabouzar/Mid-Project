@@ -6,7 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings" // Ajouté pour le nettoyage des sujets
+	"strings" // Pour nettoyage des sujets
 	"time"
 
 	ical "github.com/arran4/golang-ical"
@@ -17,7 +17,6 @@ import (
 var js nats.JetStreamContext
 
 // --- NATS Functions ---
-
 func InitNats() {
 	nc, err := nats.Connect(nats.DefaultURL)
 	if err != nil {
@@ -45,12 +44,9 @@ func PublishEvent(groupID string, event Event) {
 		return
 	}
 
-	// NETTOYAGE : NATS n'accepte pas les espaces dans les sujets.
-	// On remplace les espaces par des points pour créer une hiérarchie valide.
-	// Exemple: "M1 G1 Langue" -> "M1.G1.Langue"
 	cleanGroupID := strings.ReplaceAll(groupID, " ", ".")
-
 	subject := "COURS." + cleanGroupID
+
 	_, err = js.Publish(subject, data)
 	if err != nil {
 		log.Printf("Erreur publication NATS sur %s: %v\n", subject, err)
@@ -58,7 +54,6 @@ func PublishEvent(groupID string, event Event) {
 }
 
 // --- Agendas ---
-
 func FetchAgendas(apiURL string) ([]Agenda, error) {
 	resp, err := http.Get(apiURL + "/agendas")
 	if err != nil {
@@ -87,8 +82,7 @@ func AfficheAgendas(agendas []Agenda) {
 }
 
 // --- iCal ---
-
-func FetchICalEvents(url string) ([]Event, error) {
+func FetchICalEvents(url string, agendaID int, groupID string) ([]Event, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -124,10 +118,13 @@ func FetchICalEvents(url string) ([]Event, error) {
 			summary = prop.Value
 		}
 
+		// On ajoute AgendaID et GroupID à chaque événement
 		events = append(events, Event{
-			Summary: summary,
-			Start:   start,
-			End:     end,
+			AgendaID: agendaID,
+			GroupID:  groupID,
+			Summary:  summary,
+			Start:    start,
+			End:      end,
 		})
 	}
 
@@ -136,11 +133,12 @@ func FetchICalEvents(url string) ([]Event, error) {
 
 func AfficheEvents(events []Event) {
 	for _, e := range events {
-		log.Printf(
-			"%s : %s → %s\n",
+		log.Printf("%s : %s → %s (AgendaID=%d, Group=%s)\n",
 			e.Summary,
 			e.Start.Format(time.RFC3339),
 			e.End.Format(time.RFC3339),
+			e.AgendaID,
+			e.GroupID,
 		)
 	}
 }

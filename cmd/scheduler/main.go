@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	// 1. Initialiser la connexion NATS une seule fois au démarrage
 	scheduler.InitNats()
 
 	apiURL := "http://localhost:8080"
@@ -17,6 +16,7 @@ func main() {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
+	// Lancer la première exécution immédiatement
 	runScheduler(apiURL)
 
 	for range ticker.C {
@@ -34,17 +34,16 @@ func runScheduler(apiURL string) {
 	}
 
 	for _, a := range agendas {
-		events, err := scheduler.FetchICalEvents(a.ICalURL)
+		events, err := scheduler.FetchICalEvents(a.ICalURL, a.ID, a.GroupID)
 		if err != nil {
 			log.Println("Erreur fetch iCal:", err)
 			continue
 		}
 
-		// 2. Envoyer chaque événement à NATS
 		for _, e := range events {
 			scheduler.PublishEvent(a.GroupID, e)
 		}
-		
+
 		log.Printf("Publié %d événements pour le groupe %s sur NATS", len(events), a.GroupID)
 	}
 

@@ -11,7 +11,10 @@ type Agenda struct {
 }
 
 type Event struct {
-	Summary string
-	Start   time.Time
-	End     time.Time
+    AgendaID int       `json:"agenda_id"`  
+    GroupID  string    `json:"group_id"`   
+    Summary  string    `json:"summary"`
+    Start    time.Time `json:"start"`
+    End      time.Time `json:"end"`
 }
+
