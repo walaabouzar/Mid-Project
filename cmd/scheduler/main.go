@@ -8,44 +8,37 @@ import (
 )
 
 func main() {
-	scheduler.InitNats()
+	log.Println("Scheduler démarré")
 
-	apiURL := "http://localhost:8080"
-	interval := 5 * time.Second
+	// NATS CENTRAL
+	scheduler.InitNats("nats://localhost:4222")
 
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+	API_URL := "http://localhost:8080"
 
-	// Lancer la première exécution immédiatement
-	runScheduler(apiURL)
-
-	for range ticker.C {
-		runScheduler(apiURL)
-	}
-}
-
-func runScheduler(apiURL string) {
-	log.Println("=== Début du Scheduler ===")
-
-	agendas, err := scheduler.FetchAgendas(apiURL)
-	if err != nil {
-		log.Println("Erreur fetch agendas:", err)
-		return
-	}
-
-	for _, a := range agendas {
-		events, err := scheduler.FetchICalEvents(a.ICalURL, a.ID, a.GroupID)
+	for {
+		agendas, err := scheduler.FetchAgendas(API_URL)
 		if err != nil {
-			log.Println("Erreur fetch iCal:", err)
+			log.Println("Erreur fetch agendas:", err)
+			time.Sleep(30 * time.Second)
 			continue
 		}
 
-		for _, e := range events {
-			scheduler.PublishEvent(a.GroupID, e)
+		for _, agenda := range agendas {
+			events, err := scheduler.FetchICalEvents(
+				agenda.ICalURL,
+				agenda.ID,
+				agenda.GroupID,
+			)
+			if err != nil {
+				log.Println("Erreur iCal:", err)
+				continue
+			}
+
+			for _, event := range events {
+				scheduler.PublishEvent(agenda.GroupID, event)
+			}
 		}
 
-		log.Printf("Publié %d événements pour le groupe %s sur NATS", len(events), a.GroupID)
+		time.Sleep(1 * time.Minute)
 	}
-
-	log.Println("=== Fin du Scheduler ===")
 }

@@ -6,19 +6,21 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings" // Pour nettoyage des sujets
+	"strings"
 	"time"
 
 	ical "github.com/arran4/golang-ical"
 	"github.com/nats-io/nats.go"
 )
 
-// Variable globale pour JetStream
+/* =======================
+   NATS
+======================= */
+
 var js nats.JetStreamContext
 
-// --- NATS Functions ---
-func InitNats() {
-	nc, err := nats.Connect(nats.DefaultURL)
+func InitNats(natsURL string) {
+	nc, err := nats.Connect(natsURL)
 	if err != nil {
 		log.Fatal("Erreur connexion NATS:", err)
 	}
@@ -33,7 +35,7 @@ func InitNats() {
 		Subjects: []string{"COURS.>"},
 	})
 	if err != nil {
-		log.Println("Note: Le stream existe déjà ou erreur lors de la création.")
+		log.Println("Stream COURS déjà existant")
 	}
 }
 
@@ -44,16 +46,17 @@ func PublishEvent(groupID string, event Event) {
 		return
 	}
 
-	cleanGroupID := strings.ReplaceAll(groupID, " ", ".")
-	subject := "COURS." + cleanGroupID
-
+	subject := "COURS." + strings.ReplaceAll(groupID, " ", ".")
 	_, err = js.Publish(subject, data)
 	if err != nil {
-		log.Printf("Erreur publication NATS sur %s: %v\n", subject, err)
+		log.Println("Erreur publish NATS:", err)
 	}
 }
 
-// --- Agendas ---
+/* =======================
+   AGENDAS
+======================= */
+
 func FetchAgendas(apiURL string) ([]Agenda, error) {
 	resp, err := http.Get(apiURL + "/agendas")
 	if err != nil {
@@ -61,27 +64,17 @@ func FetchAgendas(apiURL string) ([]Agenda, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	body, _ := io.ReadAll(resp.Body)
 
 	var agendas []Agenda
-	if err := json.Unmarshal(data, &agendas); err != nil {
-		return nil, err
-	}
-
-	return agendas, nil
+	err = json.Unmarshal(body, &agendas)
+	return agendas, err
 }
 
-func AfficheAgendas(agendas []Agenda) {
-	log.Println("Agendas récupérés :")
-	for _, a := range agendas {
-		log.Printf("ID=%d, Group=%s, URL=%s\n", a.ID, a.GroupID, a.ICalURL)
-	}
-}
+/* =======================
+   ICAL
+======================= */
 
-// --- iCal ---
 func FetchICalEvents(url string, agendaID int, groupID string) ([]Event, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -89,10 +82,7 @@ func FetchICalEvents(url string, agendaID int, groupID string) ([]Event, error) 
 	}
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	data, _ := io.ReadAll(resp.Body)
 
 	cal, err := ical.ParseCalendar(bytes.NewReader(data))
 	if err != nil {
@@ -101,24 +91,14 @@ func FetchICalEvents(url string, agendaID int, groupID string) ([]Event, error) 
 
 	var events []Event
 	for _, e := range cal.Events() {
-		start, err := e.GetStartAt()
-		if err != nil {
-			log.Println("Erreur parse start:", err)
-			continue
-		}
-
-		end, err := e.GetEndAt()
-		if err != nil {
-			log.Println("Erreur parse end:", err)
-			continue
-		}
+		start, _ := e.GetStartAt()
+		end, _ := e.GetEndAt()
 
 		summary := ""
-		if prop := e.GetProperty(ical.ComponentPropertySummary); prop != nil {
-			summary = prop.Value
+		if p := e.GetProperty(ical.ComponentPropertySummary); p != nil {
+			summary = p.Value
 		}
 
-		// On ajoute AgendaID et GroupID à chaque événement
 		events = append(events, Event{
 			AgendaID: agendaID,
 			GroupID:  groupID,
@@ -131,9 +111,14 @@ func FetchICalEvents(url string, agendaID int, groupID string) ([]Event, error) 
 	return events, nil
 }
 
-func AfficheEvents(events []Event) {
+/* =======================
+   DEBUG
+======================= */
+
+func PrintEvents(events []Event) {
 	for _, e := range events {
-		log.Printf("%s : %s → %s (AgendaID=%d, Group=%s)\n",
+		log.Printf(
+			"%s | %s → %s | agenda=%d | group=%s",
 			e.Summary,
 			e.Start.Format(time.RFC3339),
 			e.End.Format(time.RFC3339),
